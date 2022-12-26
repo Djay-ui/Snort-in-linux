@@ -1,0 +1,147 @@
+*******IDS ON LINUX*******
+
+Install Dependencies:-
+`````````````````````
+$ sudo apt-get install -y \
+>bison \
+>flex \
+>gcc \
+>libdnet \
+>libdumbnet-dev \
+>libluajit-5.1-dev \
+>libnghttp2-dev \ 
+>libpcap-dev \ 
+>libpcre3-dev \
+>libssl-dev \
+>make \
+>openssl \
+>wget \
+>zlib1g-dev 
+
+---------------------------------------------------------------------------------------
+Install DAQ(Data Acquisition Library)
+`````````````````````````````````````
+$ sudo mkdir /usr/src/snort_src
+$ cd /usr/src/snort_src/
+
+/usr/src/snort_src$ sudo wget -q <URL of daq-2.0.6.tar.gz> 
+/usr/src/snort_src$ ls -l
+there will be tar.gz file
+
+$ sudo tar -zxf daq-2.0.6.tar.gz
+$ ls -l
+there will be unziped folder.
+
+
+$ cd daq-2.0.68
+
+Step1:
+`````` 
+$ ./configure
+
+Step2:
+`````
+$sudo make
+
+Step3:
+``````
+/daq-2.0.6$ sudo make install 
+
+----------------------------------------------------------------------------------------------
+
+INSTALL SNORT
+`````````````
+
+$cd ..
+/src/snort_src$ 		sudo wget <url of snort-2.9.15.tar.gz>
+/src/snort_src$ 		sudo tar -zxf snort.tar.gz
+/src/snort_src$ 		cd snort-2.9.15
+/src/snort_src/snort-2.9.15$ 	ls
+
+Check if configure files are available
+
+/src/snort_src/snort-2.9.15$ 	./configure --enable-sourcefire
+/src/snort_src/snort-2.9.15$	 sudo make
+/src/snort_src/snort-2.9.15$     sudo make install
+
+
+/src/snort_src/snort-2.9.15$ 	sudo snort -V
+
+=>if any error of shared object file, run
+
+/src/snort_src/snort-2.9.15$	sudo ldconfig
+/src/snort_src/snort-2.9.15$ 	sudo snort -v 
+
+-----------------------------------------------------------------------------------------------------
+
+CONFIGURE SNORT
+```````````````
+
+create a softlink, so we can run snort from anywhere
+
+$ sudo ln -s /usr/local/bin/snort /usr/sbin/snort
+
+-----------
+
+$ sudo groupadd snort
+$ sudo useradd snort -r -s /usr/sbin/nologin -c SNORT_IDS -g snort
+
+----------
+
+$ sudo mkdir -p /etc/snort/rules
+$ sudo mkdir /var/log/snort
+$ sudo mkdir /usr/local/lib/snort_dynamicrules
+
+-------------
+
+$ sudo cp /usr/src/snort_src/snort-2.9.15/etc/*.conf* /etc/snort/
+$ sudo cp /usr/src/snort_src/snort-2.9.15/etc/*.map /etc/snort/
+
+------------
+
+$ sudo touch /etc/snort/rules/white_list.rules
+$ sudo touch /etc/snort/rules/black_list.rules
+$ sudo touch /etc/snort/rules/local.rules
+
+-------------
+
+$ sudo chmod -R 5777 /etc/snort/
+$ sudo chmod -R 5777 /var/log/snort
+$ sudo chmod -R 5777 /usr/local/lib/snort_dynamicrules/
+$ sudo chown -R snort:snort /etc/snort/
+$ sudo chown -R snort:snort /var/log/snort
+$ sudo chown -R snort:snort /usr/local/lib/snort_dynamicrules/
+
+-------------------------------------
+
+*edit /etc/snort/snort.conf
+
+var RULE_PATH /etc/snort/rules
+var SO_RULE_PATH /etc/snort/so_rules
+var PREPROC_RULE_PATH /etc/snort/preproc_rules
+
+
+var WHITE_LIST_PATH /etc/snort/rules
+var BLACK_LIST_PATH /etc/snort/rules
+
+STEP7:
+
+comment all rules path's and add:-
+
+include $RULE_PATH/local.rules
+include $RULE_PATH/white_list.rules
+include $RULE_PATH/black_list.rules
+
+------------------------------------
+
+*Edit /etc/snort/rules/local.rules
+
+alert ip any any -> any any (msg: "IP Pkt Detected"; sid:1000001;)
+
+-----------------------------------------
+
+*RUN
+````
+
+$ sudo snort -i ens33 -u snort -g snort -c /etc/snort/snort.conf -A console
+
